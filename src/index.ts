@@ -12,19 +12,18 @@ app.use(cors())
 app.use(express.json())
 
 app.get("/", (req, res) => {
-    res.send("StudyLink API is running")
+  res.send("StudyLink API is running")
 })
 
 const PORT = process.env.PORT || 5000
 
 connectDB()
-.then(() => {
+  .then(() => {
     app.listen(5000, () => {
-    console.log("Server running on http://localhost:5000")
-})
-})
-.catch((err) => {
+      console.log("Server running on http://localhost:5000")
+    })
+  })
+  .catch((err) => {
     console.error("Failed to connect to MongoDB:", err.message)
     process.exit(1)
-})
-
+  })
