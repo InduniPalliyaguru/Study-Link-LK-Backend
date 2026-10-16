@@ -61,11 +61,14 @@ const userSchema = new Schema<IUser>(
   { timestamps: true },
 )
 
-userSchema.pre(/^(find|count)/, async function (this: mongoose.Query<unknown, IUser>) {
-  const options = this.getOptions() as { withDeleted?: boolean }
-  if (!options.withDeleted) {
-    this.where({ isDeleted: false })
-  }
-})
+userSchema.pre(
+  /^(find|count)/,
+  async function (this: mongoose.Query<unknown, IUser>) {
+    const options = this.getOptions() as { withDeleted?: boolean }
+    if (!options.withDeleted) {
+      this.where({ isDeleted: false })
+    }
+  },
+)
 
 export const User = mongoose.model<IUser>("User", userSchema)

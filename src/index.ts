@@ -3,6 +3,7 @@ import express from "express"
 import cors from "cors"
 import dns from "node:dns"
 import { connectDB } from "./config/db"
+import authRouter from "./routes/auth.routes"
 
 dns.setServers(["8.8.8.8", "1.1.1.1"])
 
@@ -14,6 +15,8 @@ app.use(express.json())
 app.get("/", (req, res) => {
   res.send("StudyLink API is running")
 })
+
+app.use("/api/v1/auth", authRouter)
 
 const PORT = process.env.PORT || 5000
 
