@@ -22,6 +22,8 @@ export interface IUser extends Document {
   institution?: string
   educationLevel?: EducationLevel
   isBlocked: boolean
+  isDeleted: boolean
+  deletedAt?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -53,8 +55,17 @@ const userSchema = new Schema<IUser>(
     institution: { type: String, trim: true },
     educationLevel: { type: String, enum: Object.values(EducationLevel) },
     isBlocked: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
   },
   { timestamps: true },
 )
+
+userSchema.pre(/^(find|count)/, async function (this: mongoose.Query<unknown, IUser>) {
+  const options = this.getOptions() as { withDeleted?: boolean }
+  if (!options.withDeleted) {
+    this.where({ isDeleted: false })
+  }
+})
 
 export const User = mongoose.model<IUser>("User", userSchema)
