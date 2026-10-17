@@ -6,16 +6,7 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from "../utils/token"
-
-export interface RegisterInput {
-  name?: string
-  email?: string
-  password?: string
-  district?: string
-  phone?: string
-  institution?: string
-  educationLevel?: EducationLevel
-}
+import { RegisterInput, LoginInput } from "../validators/auth.validator"
 
 export const registerUser = async (input: RegisterInput) => {
   const {
@@ -28,14 +19,6 @@ export const registerUser = async (input: RegisterInput) => {
     educationLevel,
   } = input
 
-  if (!name || !email || !password || !district) {
-    throw new ApiError(400, "name, email, password and district are required")
-  }
-
-  if (password.length < 8) {
-    throw new ApiError(400, "Password must be at least 8 characters")
-  }
-
   const existing = await User.findOne({ email })
   if (existing) {
     throw new ApiError(409, "Email is already registered")
@@ -43,37 +26,21 @@ export const registerUser = async (input: RegisterInput) => {
 
   const hashedPassword = await bcrypt.hash(password, 10)
 
-  try {
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      district,
-      phone,
-      institution,
-      educationLevel,
-    })
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+    district,
+    phone,
+    institution,
+    educationLevel: educationLevel as EducationLevel | undefined,
+  })
 
-    return { id: user._id, name: user.name, email: user.email, role: user.role }
-  } catch (err) {
-    if ((err as { code?: number }).code === 11000) {
-      throw new ApiError(409, "Email is already registered")
-    }
-    throw err
-  }
-}
-
-export interface LoginInput {
-  email?: string
-  password?: string
+  return { id: user._id, name: user.name, email: user.email, role: user.role }
 }
 
 export const loginUser = async (input: LoginInput) => {
   const { email, password } = input
-
-  if (!email || !password) {
-    throw new ApiError(400, "email and password are required")
-  }
 
   const user = await User.findOne({ email }).select("+password")
   if (!user) {
@@ -118,13 +85,8 @@ export const getMe = async (userId: string) => {
   }
 }
 
-export const refreshAccessToken = async (refreshToken?: string) => {
-  if (!refreshToken) {
-    throw new ApiError(400, "refreshToken is required")
-  }
-
+export const refreshAccessToken = async (refreshToken: string) => {
   let payload
-
   try {
     payload = verifyRefreshToken(refreshToken)
   } catch {

@@ -1,24 +1,30 @@
 import { Router } from "express"
-import { login, register, me, refresh } from "../controllers/auth.controller"
+import { register, login, me, refresh } from "../controllers/auth.controller"
 import { authenticate } from "../middleware/auth.middleware"
 import { requireRole } from "../middleware/role.middleware"
+import { validate } from "../middleware/validate.middleware"
+import {
+  registerSchema,
+  loginSchema,
+  refreshSchema,
+} from "../validators/auth.validator"
 import { UserRole } from "../models/user.model"
+import { sendSuccess } from "../utils/response"
 
 const router = Router()
 
-router.post("/register", register)
-router.post("/login", login)
-router.post("/refresh", refresh)
-
+router.post("/register", validate(registerSchema), register)
+router.post("/login", validate(loginSchema), login)
+router.post("/refresh", validate(refreshSchema), refresh)
 router.get("/me", authenticate, me)
 
-// for testing
+// temporary route, only to test role-based access (we will remove it later)
 router.get(
   "/admin-check",
   authenticate,
   requireRole(UserRole.ADMIN),
-  (req, res) => {
-    res.status(200).json({ success: true, message: "You are an admin" })
+  (_req, res) => {
+    sendSuccess(res, 200, "You are an admin")
   },
 )
 

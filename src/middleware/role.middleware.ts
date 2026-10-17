@@ -1,22 +1,16 @@
-import { NextFunction, Response } from "express"
-import { UserRole } from "../models/user.model"
+import { Response, NextFunction } from "express"
 import { AuthRequest } from "./auth.middleware"
+import { UserRole } from "../models/user.model"
+import { ApiError } from "../utils/ApiError"
 
 export const requireRole = (...roles: UserRole[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.user) {
-      res
-        .status(401)
-        .json({ success: false, message: "Authentication required" })
-      return
+      throw new ApiError(401, "Authentication required")
     }
 
     if (!roles.includes(req.user.role)) {
-      res.status(403).json({
-        success: false,
-        message: "You do not have permission to perform this action",
-      })
-      return
+      throw new ApiError(403, "You do not have permission to perform this action")
     }
 
     next()
