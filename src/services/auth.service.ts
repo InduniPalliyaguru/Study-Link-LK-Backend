@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs"
 import { User, EducationLevel } from "../models/user.model"
 import { ApiError } from "../utils/ApiError"
 import { signAccessToken, signRefreshToken } from "../utils/token"
+import { exportBuffer } from "node:ffi"
 
 export interface RegisterInput {
   name?: string
@@ -91,5 +92,25 @@ export const loginUser = async (input: LoginInput) => {
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),
     user: { id: user._id, name: user.name, email: user.email, role: user.role },
+  }
+}
+
+export const getMe = async (userId: string) => {
+  const user = await User.findById(userId)
+
+  if (!user) {
+    throw new ApiError(404, "User not found")
+  }
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    phone: user.phone,
+    district: user.district,
+    institution: user.institution,
+    educationLevel: user.educationLevel,
+    createdAt: user.createdAt,
   }
 }

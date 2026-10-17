@@ -27,3 +27,13 @@ export const signRefreshToken = (payload: TokenPayload): string => {
       "7d") as SignOptions["expiresIn"],
   })
 }
+
+export const verifyAccessToken = (token: string): TokenPayload => {
+  const decoded = jwt.verify(token, getSecret("JWT_ACCESS_SECRET"))
+
+  if (typeof decoded === "string") {
+    throw new Error("Invalid token payload")
+  }
+
+  return { sub: decoded.sub as string, role: decoded.role as UserRole }
+}
