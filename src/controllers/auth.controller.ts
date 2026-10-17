@@ -1,6 +1,11 @@
 import { Request, Response } from "express"
 import { ApiError } from "../utils/ApiError"
-import { registerUser, loginUser, getMe } from "../services/auth.service"
+import {
+  registerUser,
+  loginUser,
+  getMe,
+  refreshAccessToken,
+} from "../services/auth.service"
 import { AuthRequest } from "../middleware/auth.middleware"
 
 export const register = async (req: Request, res: Response) => {
@@ -50,6 +55,26 @@ export const me = async (req: AuthRequest, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Profile fetched",
+      data,
+    })
+  } catch (err) {
+    if (err instanceof ApiError) {
+      res.status(err.statusCode).json({ success: false, message: err.message })
+      return
+    }
+
+    console.error(err)
+    res.status(500).json({ success: false, message: "Internal server error" })
+  }
+}
+
+export const refresh = async (req: Request, res: Response) => {
+  try {
+    const data = await refreshAccessToken(req.body.refreshToken)
+
+    res.status(200).json({
+      success: true,
+      message: "Token refreshed",
       data,
     })
   } catch (err) {

@@ -1,8 +1,11 @@
 import bcrypt from "bcryptjs"
 import { User, EducationLevel } from "../models/user.model"
 import { ApiError } from "../utils/ApiError"
-import { signAccessToken, signRefreshToken } from "../utils/token"
-import { exportBuffer } from "node:ffi"
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "../utils/token"
 
 export interface RegisterInput {
   name?: string
@@ -112,5 +115,32 @@ export const getMe = async (userId: string) => {
     institution: user.institution,
     educationLevel: user.educationLevel,
     createdAt: user.createdAt,
+  }
+}
+
+export const refreshAccessToken = async (refreshToken?: string) => {
+  if (!refreshToken) {
+    throw new ApiError(400, "refreshToken is required")
+  }
+
+  let payload
+
+  try {
+    payload = verifyRefreshToken(refreshToken)
+  } catch {
+    throw new ApiError(401, "Invalid or expired refresh token")
+  }
+
+  const user = await User.findById(payload.sub)
+  if (!user) {
+    throw new ApiError(401, "User no longer exists")
+  }
+
+  if (user.isBlocked) {
+    throw new ApiError(403, "Your account has been blocked")
+  }
+
+  return {
+    accessToken: signAccessToken({ sub: user._id.toString(), role: user.role }),
   }
 }

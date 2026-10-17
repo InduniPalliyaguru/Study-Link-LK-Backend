@@ -37,3 +37,13 @@ export const verifyAccessToken = (token: string): TokenPayload => {
 
   return { sub: decoded.sub as string, role: decoded.role as UserRole }
 }
+
+export const verifyRefreshToken = (token: string): TokenPayload => {
+  const decoded = jwt.verify(token, getSecret("JWT_REFRESH_SECRET"))
+
+  if (typeof decoded === "string") {
+    throw new Error("Invalid token payload")
+  }
+
+  return { sub: decoded.sub as string, role: decoded.role as UserRole }
+}
