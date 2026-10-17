@@ -6,6 +6,7 @@ import { connectDB } from "./config/db"
 import authRouter from "./routes/auth.routes"
 import catalogRouter from "./routes/catalog.routes"
 import adminRouter from "./routes/admin.routes"
+import listingRouter from "./routes/listing.routes"
 import { notFound, errorHandler } from "./middleware/error.middleware"
 
 dns.setServers(["8.8.8.8", "1.1.1.1"])
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", authRouter)
 app.use("/api/v1", catalogRouter)
 app.use("/api/v1/admin", adminRouter)
+app.use("/api/v1/listings", listingRouter)
 
 app.use(notFound)
 app.use(errorHandler)
