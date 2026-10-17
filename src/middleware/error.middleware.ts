@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express"
 import { ZodError } from "zod"
 import mongoose from "mongoose"
 import { ApiError } from "../utils/ApiError"
+import multer from "multer"
 
 export const notFound = (req: Request, res: Response) => {
   res.status(404).json({
@@ -18,6 +19,19 @@ export const errorHandler = (
 ) => {
   if (err instanceof ApiError) {
     res.status(err.statusCode).json({ success: false, message: err.message })
+    return
+  }
+
+  if (err instanceof multer.MulterError) {
+    const message =
+      err.code === "LIMIT_FILE_SIZE"
+        ? "Each image must be 5MB or smaller"
+        : err.code === "LIMIT_UNEXPECTED_FILE" ||
+            err.code === "LIMIT_FILE_COUNT"
+          ? "You can upload at most 4 images (form field name: images)"
+          : err.message
+
+    res.status(400).json({ success: false, message })
     return
   }
 

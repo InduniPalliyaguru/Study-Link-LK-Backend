@@ -3,8 +3,16 @@ import { AuthRequest } from "../middleware/auth.middleware"
 import * as listingService from "../services/listing.service"
 import { sendSuccess } from "../utils/response"
 
+const getFiles = (req: AuthRequest): Express.Multer.File[] => {
+  return (req.files as Express.Multer.File[] | undefined) ?? []
+}
+
 export const create = async (req: AuthRequest, res: Response) => {
-  const data = await listingService.createListing(req.user!.id, req.body)
+  const data = await listingService.createListing(
+    req.user!.id,
+    req.body,
+    getFiles(req),
+  )
   sendSuccess(res, 201, "Listing submitted for approval", data)
 }
 
@@ -23,6 +31,7 @@ export const update = async (req: AuthRequest, res: Response) => {
     String(req.params.id),
     req.user!.id,
     req.body,
+    getFiles(req),
   )
   sendSuccess(res, 200, "Listing updated and sent for approval", data)
 }

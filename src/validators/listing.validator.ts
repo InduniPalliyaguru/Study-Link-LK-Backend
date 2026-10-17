@@ -36,12 +36,7 @@ export const createListingSchema = z.object({
     .optional(),
 })
 
-export const updateListingSchema = createListingSchema
-  .partial()
-  .refine(
-    (value) => Object.keys(value).length > 0,
-    "Provide at least one field to update",
-  )
+export const updateListingSchema = createListingSchema.partial()
 
 export type CreateListingInput = z.infer<typeof createListingSchema>
 export type UpdateListingInput = z.infer<typeof updateListingSchema>

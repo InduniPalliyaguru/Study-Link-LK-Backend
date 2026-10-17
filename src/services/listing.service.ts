@@ -9,6 +9,7 @@ import { Subject } from "../models/subject.model"
 import { GradeLevel } from "../models/gradeLevel.model"
 import { UserRole } from "../models/user.model"
 import { ApiError } from "../utils/ApiError"
+import { uploadImages, removeImages } from "./storage.service"
 import {
   CreateListingInput,
   UpdateListingInput,
@@ -56,21 +57,34 @@ const ensureCatalogExists = async (
 export const createListing = async (
   sellerId: string,
   input: CreateListingInput,
+  files: Express.Multer.File[],
 ) => {
+  if (files.length === 0) {
+    throw new ApiError(400, "At least one image is required")
+  }
+
   await ensureCatalogExists(input.subject, input.gradeLevel)
 
-  return Listing.create({
-    title: input.title,
-    description: input.description,
-    price: input.price,
-    condition: input.condition as ListingCondition,
-    district: input.district,
-    deliveryOptions: input.deliveryOptions as DeliveryOption | undefined,
-    seller: new Types.ObjectId(sellerId),
-    subject: new Types.ObjectId(input.subject),
-    gradeLevel: new Types.ObjectId(input.gradeLevel),
-    status: ListingStatus.PENDING,
-  })
+  const images = await uploadImages(files)
+
+  try {
+    return await Listing.create({
+      title: input.title,
+      description: input.description,
+      price: input.price,
+      condition: input.condition as ListingCondition,
+      district: input.district,
+      deliveryOptions: input.deliveryOptions as DeliveryOption | undefined,
+      images,
+      seller: new Types.ObjectId(sellerId),
+      subject: new Types.ObjectId(input.subject),
+      gradeLevel: new Types.ObjectId(input.gradeLevel),
+      status: ListingStatus.PENDING,
+    })
+  } catch (err) {
+    await removeImages(images)
+    throw err
+  }
 }
 
 export const getMyListings = (sellerId: string) => {
@@ -96,6 +110,7 @@ export const updateListing = async (
   id: string,
   userId: string,
   input: UpdateListingInput,
+  files: Express.Multer.File[] = [],
 ) => {
   const listing = await Listing.findById(id)
 
@@ -114,6 +129,10 @@ export const updateListing = async (
     throw new ApiError(409, "A reserved or sold listing cannot be edited")
   }
 
+  if (Object.keys(input).length === 0 && files.length === 0) {
+    throw new ApiError(422, "Provide at least one field or image to update")
+  }
+
   await ensureCatalogExists(input.subject, input.gradeLevel)
 
   const { subject, gradeLevel, condition, deliveryOptions, ...rest } = input
@@ -125,9 +144,27 @@ export const updateListing = async (
   if (deliveryOptions)
     listing.deliveryOptions = deliveryOptions as DeliveryOption
 
+  const oldImages = [...listing.images]
+  let newImages: string[] = []
+
+  if (files.length > 0) {
+    newImages = await uploadImages(files)
+    listing.images = newImages
+  }
+
   listing.status = ListingStatus.PENDING
 
-  await listing.save()
+  try {
+    await listing.save()
+  } catch (err) {
+    await removeImages(newImages)
+    throw err
+  }
+
+  if (newImages.length > 0) {
+    await removeImages(oldImages)
+  }
+
   return listing
 }
 
