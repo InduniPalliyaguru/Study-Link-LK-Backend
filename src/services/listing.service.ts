@@ -13,6 +13,7 @@ import { uploadImages, removeImages } from "./storage.service"
 import {
   CreateListingInput,
   UpdateListingInput,
+  ListingQuery,
 } from "../validators/listing.validator"
 
 const PUBLIC_STATUSES = [
@@ -195,4 +196,81 @@ export const deleteListing = async (
   listing.status = ListingStatus.REMOVED
 
   await listing.save()
+}
+
+const sortOptions = {
+  newest: { createdAt: -1, _id: -1 },
+  oldest: { createdAt: 1, _id: 1 },
+  price_asc: { price: 1, _id: 1 },
+  price_desc: { price: -1, _id: -1 },
+} as const
+
+export const searchListings = async (query: ListingQuery) => {
+  const {
+    q,
+    subject,
+    gradeLevel,
+    condition,
+    district,
+    minPrice,
+    maxPrice,
+    free,
+    sort,
+    page,
+    limit,
+  } = query
+
+  const filter: Record<string, any> = { status: ListingStatus.AVAILABLE }
+
+  if (q) filter.$text = { $search: q }
+  if (subject) filter.subject = subject
+  if (gradeLevel) filter.gradeLevel = gradeLevel
+  if (condition) filter.condition = condition
+  if (district)
+    filter.district = new RegExp(
+      `^${district.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      "i",
+    )
+
+  if (free === "true") {
+    filter.price = 0
+  } else if (minPrice !== undefined || maxPrice !== undefined) {
+    filter.price = {
+      ...(minPrice !== undefined && { $gte: minPrice }),
+      ...(maxPrice !== undefined && { $lte: maxPrice }),
+    }
+  }
+
+  const skip = (page - 1) * limit
+
+  const [items, total] = await Promise.all([
+    Listing.find(filter)
+      .select(
+        "title price condition district images deliveryOptions subject gradeLevel seller createdAt",
+      )
+      .populate([
+        { path: "subject", select: "name colorKey" },
+        { path: "gradeLevel", select: "name" },
+        { path: "seller", select: "name district" },
+      ])
+      .sort(sortOptions[sort])
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Listing.countDocuments(filter),
+  ])
+
+  const totalPages = Math.max(1, Math.ceil(total / limit))
+
+  return {
+    items,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
+  }
 }

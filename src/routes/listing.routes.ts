@@ -12,10 +12,12 @@ import {
   getOne,
   update,
   remove,
+  search,
 } from "../controllers/listing.controller"
 
 const router = Router()
 
+router.get("/", search)
 router.get("/mine", authenticate, getMine)
 router.get("/:id", getOne)
 router.post(

@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { AuthRequest } from "../middleware/auth.middleware"
 import * as listingService from "../services/listing.service"
 import { sendSuccess } from "../utils/response"
+import { listingQuerySchema } from "../validators/listing.validator"
 
 const getFiles = (req: AuthRequest): Express.Multer.File[] => {
   return (req.files as Express.Multer.File[] | undefined) ?? []
@@ -43,4 +44,10 @@ export const remove = async (req: AuthRequest, res: Response) => {
     req.user!.role,
   )
   sendSuccess(res, 200, "Listing deleted")
+}
+
+export const search = async (req: Request, res: Response) => {
+  const query = listingQuerySchema.parse(req.query)
+  const { items, meta } = await listingService.searchListings(query)
+  sendSuccess(res, 200, "Listings fetched", items, meta)
 }

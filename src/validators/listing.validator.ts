@@ -40,3 +40,29 @@ export const updateListingSchema = createListingSchema.partial()
 
 export type CreateListingInput = z.infer<typeof createListingSchema>
 export type UpdateListingInput = z.infer<typeof updateListingSchema>
+
+export const listingQuerySchema = z
+  .object({
+    q: z.string().trim().max(100).optional(),
+    subject: objectId("Subject").optional(),
+    gradeLevel: objectId("Grade level").optional(),
+    condition: z.enum(["New", "Good", "Fair"]).optional(),
+    district: z.string().trim().max(50).optional(),
+    minPrice: z.coerce.number().min(0).optional(),
+    maxPrice: z.coerce.number().min(0).optional(),
+    free: z.enum(["true", "false"]).optional(),
+    sort: z
+      .enum(["newest", "oldest", "price_asc", "price_desc"])
+      .default("newest"),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(12),
+  })
+  .refine(
+    (v) =>
+      v.minPrice === undefined ||
+      v.maxPrice === undefined ||
+      v.minPrice <= v.maxPrice,
+    { message: "minPrice cannot be greater than maxPrice", path: ["minPrice"] },
+  )
+
+export type ListingQuery = z.infer<typeof listingQuerySchema>
