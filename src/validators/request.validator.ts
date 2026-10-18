@@ -31,4 +31,20 @@ export const respondSchema = z.object({
 })
 
 export type CreateRequestInput = z.infer<typeof createRequestSchema>
+
+export const shipSchema = z.object({
+  trackingNumber: z
+    .string()
+    .trim()
+    .max(50, "Tracking number is too long")
+    .optional(),
+})
+
+export const confirmSchema = z.object({
+  code: z
+    .string()
+    .regex(/^\d{6}$/, "The handover code must be 6 digits")
+    .optional(),
+})
+
 export type RespondInput = z.infer<typeof respondSchema>

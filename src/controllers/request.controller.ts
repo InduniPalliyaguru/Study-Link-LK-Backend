@@ -19,14 +19,14 @@ export const received = async (req: AuthRequest, res: Response) => {
 }
 
 export const respond = async (req: AuthRequest, res: Response) => {
-  const data = await requestService.respondToRequest(
+  const { request, handoverCode } = await requestService.respondToRequest(
     req.user!.id,
     String(req.params.id),
     req.body.decision,
   )
   const message =
     req.body.decision === "accept" ? "Request accepted" : "Request rejected"
-  sendSuccess(res, 200, message, data)
+  sendSuccess(res, 200, message, { ...request, handoverCode })
 }
 
 export const cancel = async (req: AuthRequest, res: Response) => {
@@ -35,4 +35,41 @@ export const cancel = async (req: AuthRequest, res: Response) => {
     String(req.params.id),
   )
   sendSuccess(res, 200, "Request cancelled", data)
+}
+
+export const ship = async (req: AuthRequest, res: Response) => {
+  const data = await requestService.shipRequest(
+    req.user!.id,
+    String(req.params.id),
+    req.body.trackingNumber,
+  )
+  sendSuccess(res, 200, "Request marked as shipped", data)
+}
+
+export const confirm = async (req: AuthRequest, res: Response) => {
+  const data = await requestService.confirmReceived(
+    req.user!.id,
+    String(req.params.id),
+    req.body.code,
+  )
+  sendSuccess(res, 200, "Receipt confirmed. The book is now sold", data)
+}
+
+export const regenerate = async (req: AuthRequest, res: Response) => {
+  const { request, handoverCode } = await requestService.regenerateCode(
+    req.user!.id,
+    String(req.params.id),
+  )
+  sendSuccess(res, 200, "New handover code generated", {
+    ...request,
+    handoverCode,
+  })
+}
+
+export const completeManual = async (req: AuthRequest, res: Response) => {
+  const data = await requestService.completeManually(
+    req.user!.id,
+    String(req.params.id),
+  )
+  sendSuccess(res, 200, "Request completed (unverified)", data)
 }

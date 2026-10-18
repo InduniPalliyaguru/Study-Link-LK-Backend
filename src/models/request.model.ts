@@ -35,6 +35,13 @@ export interface IRequest extends Document {
   deliveryAddress?: string
   status: RequestStatus
   respondedAt?: Date
+  handoverCodeHash?: string
+  handoverCodeExpires?: Date
+  handoverAttempts: number
+  trackingNumber?: string
+  shippedAt?: Date
+  completedAt?: Date
+  verified: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -57,6 +64,13 @@ const requestSchema = new Schema<IRequest>(
       default: RequestStatus.PENDING,
     },
     respondedAt: { type: Date },
+    handoverCodeHash: { type: String, select: false },
+    handoverCodeExpires: { type: Date },
+    handoverAttempts: { type: Number, default: 0 },
+    trackingNumber: { type: String, trim: true, maxlength: 50 },
+    shippedAt: { type: Date },
+    completedAt: { type: Date },
+    verified: { type: Boolean, default: false },
   },
   { timestamps: true },
 )
@@ -68,9 +82,9 @@ requestSchema.index(
     partialFilterExpression: { status: { $in: ACTIVE_STATUSES } },
   },
 )
-
 requestSchema.index({ buyer: 1, createdAt: -1 })
 requestSchema.index({ seller: 1, createdAt: -1 })
+requestSchema.index({ status: 1, shippedAt: 1 })
 
 export const PurchaseRequest = mongoose.model<IRequest>(
   "Request",
