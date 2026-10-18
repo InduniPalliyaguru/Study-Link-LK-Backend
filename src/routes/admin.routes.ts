@@ -10,6 +10,10 @@ import {
   updateGradeLevelSchema,
 } from "../validators/catalog.validator"
 import {
+  rejectListingSchema,
+  blockUserSchema,
+} from "../validators/admin.validator"
+import {
   adminGetSubjects,
   adminCreateSubject,
   adminUpdateSubject,
@@ -19,17 +23,27 @@ import {
   adminUpdateGradeLevel,
   adminDeactivateGradeLevel,
 } from "../controllers/catalog.controller"
+import {
+  getListings,
+  approve,
+  reject,
+  getUsers,
+  blockUser,
+  removeUser,
+} from "../controllers/admin.controller"
 
 const router = Router()
 
 // every route below needs a logged-in ADMIN
 router.use(authenticate, requireRole(UserRole.ADMIN))
 
+// subjects
 router.get("/subjects", adminGetSubjects)
 router.post("/subjects", validate(createSubjectSchema), adminCreateSubject)
 router.put("/subjects/:id", validate(updateSubjectSchema), adminUpdateSubject)
 router.delete("/subjects/:id", adminDeactivateSubject)
 
+// grade levels
 router.get("/grade-levels", adminGetGradeLevels)
 router.post(
   "/grade-levels",
@@ -42,5 +56,15 @@ router.put(
   adminUpdateGradeLevel,
 )
 router.delete("/grade-levels/:id", adminDeactivateGradeLevel)
+
+// listing moderation
+router.get("/listings", getListings)
+router.patch("/listings/:id/approve", approve)
+router.patch("/listings/:id/reject", validate(rejectListingSchema), reject)
+
+// users
+router.get("/users", getUsers)
+router.patch("/users/:id/block", validate(blockUserSchema), blockUser)
+router.delete("/users/:id", removeUser)
 
 export default router

@@ -66,11 +66,12 @@ export const createRequest = async (
 ) => {
   const listing = await Listing.findById(input.listing)
 
-  if (
-    !listing ||
-    listing.status === ListingStatus.PENDING ||
-    listing.status === ListingStatus.REMOVED
-  ) {
+  const hiddenStatuses = [
+    ListingStatus.PENDING,
+    ListingStatus.REMOVED,
+    ListingStatus.REJECTED,
+  ]
+  if (!listing || hiddenStatuses.includes(listing.status)) {
     throw new ApiError(404, "Listing not found")
   }
 

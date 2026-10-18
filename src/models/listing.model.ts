@@ -12,6 +12,7 @@ export enum ListingStatus {
   RESERVED = "reserved",
   SOLD = "sold",
   REMOVED = "removed",
+  REJECTED = "rejected",
 }
 
 export enum DeliveryOption {
@@ -30,6 +31,7 @@ export interface IListing extends Document {
   status: ListingStatus
   deliveryOptions: DeliveryOption
   aiGenerated: boolean
+  rejectionReason?: string
   seller: Types.ObjectId
   subject: Types.ObjectId
   gradeLevel: Types.ObjectId
@@ -81,6 +83,7 @@ const listingSchema = new Schema<IListing>(
       default: DeliveryOption.BOTH,
     },
     aiGenerated: { type: Boolean, default: false },
+    rejectionReason: { type: String, trim: true, maxlength: 200 },
     seller: { type: Schema.Types.ObjectId, ref: "User", required: true },
     subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true },
     gradeLevel: {

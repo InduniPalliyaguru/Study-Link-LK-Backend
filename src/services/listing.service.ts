@@ -123,10 +123,12 @@ export const updateListing = async (
     throw new ApiError(403, "You can only edit your own listings")
   }
 
-  if (
-    listing.status !== ListingStatus.PENDING &&
-    listing.status !== ListingStatus.AVAILABLE
-  ) {
+  const editable = [
+    ListingStatus.PENDING,
+    ListingStatus.AVAILABLE,
+    ListingStatus.REJECTED,
+  ]
+  if (!editable.includes(listing.status)) {
     throw new ApiError(409, "A reserved or sold listing cannot be edited")
   }
 
@@ -154,6 +156,7 @@ export const updateListing = async (
   }
 
   listing.status = ListingStatus.PENDING
+  listing.rejectionReason = undefined
 
   try {
     await listing.save()
