@@ -9,7 +9,7 @@ import {
 const escapeRegex = (text: string) =>
   text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
-const buildMeta = (total: number, page: number, limit: number) => {
+export const buildMeta = (total: number, page: number, limit: number) => {
   const totalPages = Math.max(1, Math.ceil(total / limit))
   return {
     total,

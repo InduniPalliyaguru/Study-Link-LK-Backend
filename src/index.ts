@@ -10,6 +10,9 @@ import listingRouter from "./routes/listing.routes"
 import requestRouter from "./routes/request.routes"
 import { notFound, errorHandler } from "./middleware/error.middleware"
 import { autoCompleteShippedRequests } from "./services/request.service"
+import reviewRouter from "./routes/review.routes"
+import userRouter from "./routes/user.routes"
+import reportRouter from "./routes/report.routes"
 
 dns.setServers(["8.8.8.8", "1.1.1.1"])
 
@@ -27,6 +30,9 @@ app.use("/api/v1", catalogRouter)
 app.use("/api/v1/admin", adminRouter)
 app.use("/api/v1/listings", listingRouter)
 app.use("/api/v1/requests", requestRouter)
+app.use("/api/v1/reviews", reviewRouter)
+app.use("/api/v1/users", userRouter)
+app.use("/api/v1/reports", reportRouter)
 
 app.use(notFound)
 app.use(errorHandler)

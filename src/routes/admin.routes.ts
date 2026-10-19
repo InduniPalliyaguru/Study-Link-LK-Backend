@@ -31,6 +31,11 @@ import {
   blockUser,
   removeUser,
 } from "../controllers/admin.controller"
+import { resolveReportSchema } from "../validators/report.validator"
+import {
+  adminGetReports,
+  adminResolveReport,
+} from "../controllers/report.controller"
 
 const router = Router()
 
@@ -66,5 +71,9 @@ router.patch("/listings/:id/reject", validate(rejectListingSchema), reject)
 router.get("/users", getUsers)
 router.patch("/users/:id/block", validate(blockUserSchema), blockUser)
 router.delete("/users/:id", removeUser)
+
+// reports
+router.get("/reports", adminGetReports)
+router.patch("/reports/:id", validate(resolveReportSchema), adminResolveReport)
 
 export default router
