@@ -4,6 +4,7 @@ import * as adminService from "../services/admin.service"
 import {
   adminListingQuerySchema,
   adminUserQuerySchema,
+  adminRequestQuerySchema,
 } from "../validators/admin.validator"
 import { sendSuccess } from "../utils/response"
 
@@ -49,4 +50,10 @@ export const blockUser = async (req: AuthRequest, res: Response) => {
 export const removeUser = async (req: AuthRequest, res: Response) => {
   await adminService.deleteUser(req.user!.id, String(req.params.id))
   sendSuccess(res, 200, "User deleted")
+}
+
+export const getRequests = async (req: AuthRequest, res: Response) => {
+  const query = adminRequestQuerySchema.parse(req.query)
+  const { items, meta } = await adminService.listRequestsForAdmin(query)
+  sendSuccess(res, 200, "Requests fetched", items, meta)
 }

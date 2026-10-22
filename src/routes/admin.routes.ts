@@ -30,12 +30,23 @@ import {
   getUsers,
   blockUser,
   removeUser,
+  getRequests,
 } from "../controllers/admin.controller"
 import { resolveReportSchema } from "../validators/report.validator"
 import {
   adminGetReports,
   adminResolveReport,
 } from "../controllers/report.controller"
+import {
+  createMeetupPointSchema,
+  updateMeetupPointSchema,
+} from "../validators/meetup.validator"
+import {
+  adminGetPoints,
+  adminCreatePoint,
+  adminUpdatePoint,
+  adminDeactivatePoint,
+} from "../controllers/meetup.controller"
 
 const router = Router()
 
@@ -75,5 +86,22 @@ router.delete("/users/:id", removeUser)
 // reports
 router.get("/reports", adminGetReports)
 router.patch("/reports/:id", validate(resolveReportSchema), adminResolveReport)
+
+// requests (monitoring)
+router.get("/requests", getRequests)
+
+// meet-up points
+router.get("/meetup-points", adminGetPoints)
+router.post(
+  "/meetup-points",
+  validate(createMeetupPointSchema),
+  adminCreatePoint,
+)
+router.put(
+  "/meetup-points/:id",
+  validate(updateMeetupPointSchema),
+  adminUpdatePoint,
+)
+router.delete("/meetup-points/:id", adminDeactivatePoint)
 
 export default router

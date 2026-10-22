@@ -4,7 +4,9 @@ import { ApiError } from "../utils/ApiError"
 import {
   AdminListingQuery,
   AdminUserQuery,
+  AdminRequestQuery,
 } from "../validators/admin.validator"
+import { PurchaseRequest } from "../models/request.model"
 
 const escapeRegex = (text: string) =>
   text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -24,7 +26,7 @@ export const buildMeta = (total: number, page: number, limit: number) => {
 // listings
 export const listListingsForAdmin = async (query: AdminListingQuery) => {
   const { status, page, limit } = query
-    const filter = { status: status as ListingStatus }
+  const filter = { status: status as ListingStatus }
 
   const [items, total] = await Promise.all([
     Listing.find(filter)
@@ -174,4 +176,41 @@ export const deleteUser = async (adminId: string, userId: string) => {
       },
     },
   )
+}
+
+// requests
+export const listRequestsForAdmin = async (query: AdminRequestQuery) => {
+  const { status, page, limit } = query
+  const filter: Record<string, unknown> = {}
+
+  if (status) filter.status = status
+
+  const [items, total] = await Promise.all([
+    PurchaseRequest.find(filter)
+      .select("-deliveryAddress")
+      .sort({ createdAt: -1, _id: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate([
+        {
+          path: "listing",
+          select: "title images status",
+          options: { withDeleted: true },
+        },
+        {
+          path: "buyer",
+          select: "name email district",
+          options: { withDeleted: true },
+        },
+        {
+          path: "seller",
+          select: "name email district",
+          options: { withDeleted: true },
+        },
+      ])
+      .lean(),
+    PurchaseRequest.countDocuments(filter),
+  ])
+
+  return { items, meta: buildMeta(total, page, limit) }
 }

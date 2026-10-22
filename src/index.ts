@@ -13,6 +13,8 @@ import { autoCompleteShippedRequests } from "./services/request.service"
 import reviewRouter from "./routes/review.routes"
 import userRouter from "./routes/user.routes"
 import reportRouter from "./routes/report.routes"
+import savedRouter from "./routes/saved.routes"
+import meetupRouter from "./routes/meetup.routes"
 
 dns.setServers(["8.8.8.8", "1.1.1.1"])
 
@@ -33,6 +35,8 @@ app.use("/api/v1/requests", requestRouter)
 app.use("/api/v1/reviews", reviewRouter)
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/reports", reportRouter)
+app.use("/api/v1/saved", savedRouter)
+app.use("/api/v1/meetup-points", meetupRouter)
 
 app.use(notFound)
 app.use(errorHandler)

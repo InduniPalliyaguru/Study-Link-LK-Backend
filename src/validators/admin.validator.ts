@@ -33,3 +33,19 @@ export const blockUserSchema = z.object({
 
 export type AdminListingQuery = z.infer<typeof adminListingQuerySchema>
 export type AdminUserQuery = z.infer<typeof adminUserQuerySchema>
+
+export const adminRequestQuerySchema = z.object({
+  status: z
+    .enum([
+      "pending",
+      "accepted",
+      "rejected",
+      "cancelled",
+      "shipped",
+      "completed",
+    ])
+    .optional(),
+  ...paging,
+})
+
+export type AdminRequestQuery = z.infer<typeof adminRequestQuerySchema>
