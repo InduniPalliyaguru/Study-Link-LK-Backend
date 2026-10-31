@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "outputDirectory": ".",
   "builds": [
     {
       "src": "index.js",
@@ -19,9 +20,9 @@
     }
   },
   "crons": [
-    {
-      "path": "/api/v1/cron/auto-complete",
-      "schedule": "0 3 * * *"
+    { 
+      "path": "/api/v1/cron/auto-complete", 
+      "schedule": "0 3 * * *" 
     }
   ]
 }
