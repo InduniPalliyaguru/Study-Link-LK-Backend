@@ -1,24 +1,11 @@
 {
   "version": 2,
-  "outputDirectory": ".",
-  "builds": [
-    {
-      "src": "index.js",
-      "use": "@vercel/node"
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.js"
     }
   ],
-  "functions": {
-    "index.js": {
-      "includeFiles": "dist/**",
-      "maxDuration": 30
-    }
-  },
   "crons": [
     { 
       "path": "/api/v1/cron/auto-complete", 
