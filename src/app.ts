@@ -15,7 +15,27 @@ import { notFound, errorHandler } from "./middleware/error.middleware"
 
 const app = express()
 
-app.use(cors())
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origin.endsWith(".vercel.app") ||
+        origin.includes("localhost")
+      ) {
+        callback(null, true)
+      } else {
+        callback(new Error("Not allowed by CORS"))
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  }),
+)
+
+app.options("*", cors())
+
 app.use(express.json())
 
 app.get("/api", (_req, res) => {
