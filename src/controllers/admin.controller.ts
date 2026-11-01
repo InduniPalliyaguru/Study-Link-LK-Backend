@@ -57,3 +57,8 @@ export const getRequests = async (req: AuthRequest, res: Response) => {
   const { items, meta } = await adminService.listRequestsForAdmin(query)
   sendSuccess(res, 200, "Requests fetched", items, meta)
 }
+
+export const getStats = async (_req: AuthRequest, res: Response) => {
+  const data = await adminService.getDashboardStats()
+  sendSuccess(res, 200, "Statistics fetched", data)
+}

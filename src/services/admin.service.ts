@@ -6,7 +6,9 @@ import {
   AdminUserQuery,
   AdminRequestQuery,
 } from "../validators/admin.validator"
-import { PurchaseRequest } from "../models/request.model"
+import { PurchaseRequest, RequestStatus } from "../models/request.model"
+import { Report, ReportStatus } from "../models/report.model"
+import { Subject } from "../models/subject.model"
 
 const escapeRegex = (text: string) =>
   text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -213,4 +215,58 @@ export const listRequestsForAdmin = async (query: AdminRequestQuery) => {
   ])
 
   return { items, meta: buildMeta(total, page, limit) }
+}
+
+// dashboard statistics
+export const getDashboardStats = async () => {
+  const [
+    students,
+    activeListings,
+    pendingListings,
+    booksSold,
+    openReports,
+    pendingRequests,
+    completedRequests,
+    subjects,
+    perSubject,
+  ] = await Promise.all([
+    User.countDocuments({ role: UserRole.USER }),
+    Listing.countDocuments({ status: ListingStatus.AVAILABLE }),
+    Listing.countDocuments({ status: ListingStatus.PENDING }),
+    Listing.countDocuments({ status: ListingStatus.SOLD }),
+    Report.countDocuments({ status: ReportStatus.OPEN }),
+    PurchaseRequest.countDocuments({ status: RequestStatus.PENDING }),
+    PurchaseRequest.countDocuments({ status: RequestStatus.COMPLETED }),
+    Subject.find({ isActive: true }).sort({ name: 1 }).lean(),
+    Listing.aggregate<{ _id: unknown; count: number }>([
+      {
+        $match: {
+          status: { $in: [ListingStatus.AVAILABLE, ListingStatus.RESERVED] },
+          isDeleted: false,
+        },
+      },
+      { $group: { _id: "$subject", count: { $sum: 1 } } },
+    ]),
+  ])
+
+  const counts = new Map(perSubject.map((row) => [String(row._id), row.count]))
+
+  const bySubject = subjects
+    .map((subject) => ({
+      name: subject.name,
+      colorKey: subject.colorKey,
+      count: counts.get(String(subject._id)) ?? 0,
+    }))
+    .sort((a, b) => b.count - a.count)
+
+  return {
+    students,
+    activeListings,
+    pendingListings,
+    booksSold,
+    openReports,
+    pendingRequests,
+    completedRequests,
+    bySubject,
+  }
 }

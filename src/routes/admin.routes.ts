@@ -31,6 +31,7 @@ import {
   blockUser,
   removeUser,
   getRequests,
+  getStats,
 } from "../controllers/admin.controller"
 import { resolveReportSchema } from "../validators/report.validator"
 import {
@@ -52,6 +53,8 @@ const router = Router()
 
 // every route below needs a logged-in ADMIN
 router.use(authenticate, requireRole(UserRole.ADMIN))
+
+router.get("/stats", getStats)
 
 // subjects
 router.get("/subjects", adminGetSubjects)
