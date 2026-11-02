@@ -77,6 +77,7 @@ export const createListing = async (
       district: input.district,
       deliveryOptions: input.deliveryOptions as DeliveryOption | undefined,
       images,
+      aiGenerated: input.aiGenerated === "true",
       seller: new Types.ObjectId(sellerId),
       subject: new Types.ObjectId(input.subject),
       gradeLevel: new Types.ObjectId(input.gradeLevel),

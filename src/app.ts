@@ -11,6 +11,7 @@ import reportRouter from "./routes/report.routes"
 import savedRouter from "./routes/saved.routes"
 import meetupRouter from "./routes/meetup.routes"
 import cronRouter from "./routes/cron.routes"
+import aiRouter from "./routes/ai.routes"
 import { notFound, errorHandler } from "./middleware/error.middleware"
 
 const app = express()
@@ -31,6 +32,7 @@ app.use("/api/v1/reviews", reviewRouter)
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/reports", reportRouter)
 app.use("/api/v1/saved", savedRouter)
+app.use("/api/v1/ai", aiRouter)
 app.use("/api/v1/meetup-points", meetupRouter)
 app.use("/api/v1/cron", cronRouter)
 

@@ -34,6 +34,7 @@ export const createListingSchema = z.object({
       error: "Delivery option must be meetup, courier or both",
     })
     .optional(),
+  aiGenerated: z.enum(["true", "false"]).optional(),
 })
 
 export const updateListingSchema = createListingSchema.partial()
