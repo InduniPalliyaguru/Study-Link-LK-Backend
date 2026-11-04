@@ -12,6 +12,11 @@ import {
 import { Listing, ListingStatus, DeliveryOption } from "../models/listing.model"
 import { ApiError } from "../utils/ApiError"
 import { CreateRequestInput } from "../validators/request.validator"
+import {
+  notifyNewRequest,
+  notifyRequestDecision,
+  notifyShipped,
+} from "./notification.service"
 
 type Plain = Record<string, unknown>
 
@@ -106,7 +111,7 @@ export const createRequest = async (
   }
 
   try {
-    return await PurchaseRequest.create({
+    const created = await PurchaseRequest.create({
       listing: listing._id,
       buyer: new Types.ObjectId(buyerId),
       seller: listing.seller,
@@ -116,6 +121,9 @@ export const createRequest = async (
         input.deliveryMethod === "courier" ? input.deliveryAddress : undefined,
       status: RequestStatus.PENDING,
     })
+
+    await notifyNewRequest(created)
+    return created
   } catch (err) {
     if ((err as { code?: number }).code === 11000) {
       throw new ApiError(
@@ -190,6 +198,7 @@ export const respondToRequest = async (
     request.status = RequestStatus.REJECTED
     request.respondedAt = new Date()
     await request.save()
+    await notifyRequestDecision(request, "rejected")
     return {
       request: safeRequest(request),
       handoverCode: undefined as string | undefined,
@@ -227,6 +236,8 @@ export const respondToRequest = async (
     )
     throw err
   }
+
+  await notifyRequestDecision(request, "accepted")
 
   return { request: safeRequest(request), handoverCode }
 }
@@ -295,6 +306,7 @@ export const shipRequest = async (
   request.status = RequestStatus.SHIPPED
   request.shippedAt = new Date()
   request.trackingNumber = trackingNumber || undefined
+  await notifyShipped(request)
   await request.save()
 
   return request

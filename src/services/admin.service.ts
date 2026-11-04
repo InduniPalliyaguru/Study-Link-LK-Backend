@@ -9,6 +9,7 @@ import {
 import { PurchaseRequest, RequestStatus } from "../models/request.model"
 import { Report, ReportStatus } from "../models/report.model"
 import { Subject } from "../models/subject.model"
+import { notifyListingDecision } from "./notification.service"
 
 const escapeRegex = (text: string) =>
   text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -64,6 +65,8 @@ export const approveListing = async (listingId: string) => {
       : new ApiError(404, "Listing not found")
   }
 
+  await notifyListingDecision(listing, "approved")
+
   return listing
 }
 
@@ -80,6 +83,8 @@ export const rejectListing = async (listingId: string, reason: string) => {
       ? new ApiError(409, "Only pending listings can be rejected")
       : new ApiError(404, "Listing not found")
   }
+
+  await notifyListingDecision(listing, "rejected", reason)
 
   return listing
 }
