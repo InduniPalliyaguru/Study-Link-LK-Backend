@@ -32,6 +32,7 @@ import {
   removeUser,
   getRequests,
   getStats,
+  analytics,
 } from "../controllers/admin.controller"
 import { resolveReportSchema } from "../validators/report.validator"
 import {
@@ -55,6 +56,7 @@ const router = Router()
 router.use(authenticate, requireRole(UserRole.ADMIN))
 
 router.get("/stats", getStats)
+router.get("/analytics", analytics)
 
 // subjects
 router.get("/subjects", adminGetSubjects)

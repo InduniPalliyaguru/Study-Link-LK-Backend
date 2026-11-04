@@ -275,3 +275,155 @@ export const getDashboardStats = async () => {
     bySubject,
   }
 }
+
+//charts
+type CountRow = { _id: unknown; count: number }
+
+const toMap = (rows: CountRow[]) =>
+  new Map(rows.map((row) => [String(row._id), row.count]))
+const percent = (part: number, total: number) =>
+  total > 0 ? Math.round((part / total) * 100) : 0
+const monthKey = (date: Date) =>
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`
+
+export const getAnalytics = async () => {
+  const now = new Date()
+  const start = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1),
+  )
+
+  const months = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(
+      Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + index, 1),
+    )
+    return {
+      key: monthKey(date),
+      label: date.toLocaleString("en-US", { month: "short", timeZone: "UTC" }),
+    }
+  })
+
+  const live = [
+    ListingStatus.AVAILABLE,
+    ListingStatus.RESERVED,
+    ListingStatus.SOLD,
+  ]
+
+  const [
+    created,
+    sold,
+    districts,
+    supply,
+    demand,
+    statuses,
+    subjects,
+    priceStats,
+    listingsTotal,
+    aiListings,
+    completedTotal,
+    completedVerified,
+  ] = await Promise.all([
+    Listing.aggregate<CountRow>([
+      { $match: { createdAt: { $gte: start }, isDeleted: false } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+    PurchaseRequest.aggregate<CountRow>([
+      {
+        $match: {
+          status: RequestStatus.COMPLETED,
+          completedAt: { $gte: start },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m", date: "$completedAt" } },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+    Listing.aggregate<CountRow>([
+      { $match: { isDeleted: false, status: { $in: live } } },
+      { $group: { _id: "$district", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 6 },
+    ]),
+    Listing.aggregate<CountRow>([
+      { $match: { isDeleted: false, status: ListingStatus.AVAILABLE } },
+      { $group: { _id: "$subject", count: { $sum: 1 } } },
+    ]),
+    PurchaseRequest.aggregate<CountRow>([
+      {
+        $lookup: {
+          from: "listings",
+          localField: "listing",
+          foreignField: "_id",
+          as: "book",
+        },
+      },
+      { $unwind: "$book" },
+      { $group: { _id: "$book.subject", count: { $sum: 1 } } },
+    ]),
+    PurchaseRequest.aggregate<CountRow>([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+    Subject.find({ isActive: true }).lean(),
+    Listing.aggregate<{ avg: number | null; free: number }>([
+      { $match: { isDeleted: false, status: ListingStatus.AVAILABLE } },
+      {
+        $group: {
+          _id: null,
+          avg: { $avg: { $cond: [{ $gt: ["$price", 0] }, "$price", null] } },
+          free: { $sum: { $cond: [{ $eq: ["$price", 0] }, 1, 0] } },
+        },
+      },
+    ]),
+    Listing.countDocuments({}),
+    Listing.countDocuments({ aiGenerated: true }),
+    PurchaseRequest.countDocuments({ status: RequestStatus.COMPLETED }),
+    PurchaseRequest.countDocuments({
+      status: RequestStatus.COMPLETED,
+      verified: true,
+    }),
+  ])
+
+  const createdMap = toMap(created)
+  const soldMap = toMap(sold)
+  const supplyMap = toMap(supply)
+  const demandMap = toMap(demand)
+
+  return {
+    months: months.map((month) => ({
+      label: month.label,
+      listings: createdMap.get(month.key) ?? 0,
+      sold: soldMap.get(month.key) ?? 0,
+    })),
+    districts: districts.map((row) => ({
+      name: String(row._id),
+      count: row.count,
+    })),
+    subjects: subjects
+      .map((subject) => ({
+        name: subject.name,
+        colorKey: subject.colorKey,
+        supply: supplyMap.get(String(subject._id)) ?? 0,
+        demand: demandMap.get(String(subject._id)) ?? 0,
+      }))
+      .sort((a, b) => b.supply + b.demand - (a.supply + a.demand)),
+    requestStatus: statuses.map((row) => ({
+      status: String(row._id),
+      count: row.count,
+    })),
+    kpis: {
+      averagePrice: priceStats[0]?.avg ? Math.round(priceStats[0].avg) : 0,
+      freeBooks: priceStats[0]?.free ?? 0,
+      aiShare: percent(aiListings, listingsTotal),
+      verifiedShare: percent(completedVerified, completedTotal),
+      listingsTotal,
+      completedTotal,
+    },
+  }
+}

@@ -62,3 +62,8 @@ export const getStats = async (_req: AuthRequest, res: Response) => {
   const data = await adminService.getDashboardStats()
   sendSuccess(res, 200, "Statistics fetched", data)
 }
+
+export const analytics = async (_req: AuthRequest, res: Response) => {
+  const data = await adminService.getAnalytics()
+  sendSuccess(res, 200, "Analytics fetched", data)
+}
