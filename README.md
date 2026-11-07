@@ -5,8 +5,8 @@ REST API for **StudyLink LK**, a marketplace where Sri Lankan students buy, sell
 Built for the **ITS2020 Rapid Application Development** final coursework (IJSE, Graduate Diploma in Software Engineering).
 
 - **Frontend repository:** https://github.com/InduniPalliyaguru/Study-Link-LK-Frontend.git
-- **Live frontend:** `https://studylink-web.vercel.app/login`
-- **Live API:** `https://studylink-api-delta.vercel.app/`
+- **Live frontend:** https://studylink-web.vercel.app/login
+- **Live API:** https://studylink-api-delta.vercel.app/
 
 ---
 
