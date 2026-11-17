@@ -22,6 +22,9 @@ export interface IUser extends Document {
   institution?: string
   educationLevel?: EducationLevel
   isBlocked: boolean
+  passwordResetTokenHash?: string
+  passwordResetExpires?: Date
+  passwordChangedAt?: Date
   isDeleted: boolean
   deletedAt?: Date
   createdAt: Date
@@ -55,6 +58,9 @@ const userSchema = new Schema<IUser>(
     institution: { type: String, trim: true },
     educationLevel: { type: String, enum: Object.values(EducationLevel) },
     isBlocked: { type: Boolean, default: false },
+    passwordResetTokenHash: { type: String, select: false },
+    passwordResetExpires: { type: Date },
+    passwordChangedAt: { type: Date },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date },
   },

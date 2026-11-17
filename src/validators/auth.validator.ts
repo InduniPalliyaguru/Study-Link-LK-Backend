@@ -32,5 +32,24 @@ export const refreshSchema = z.object({
   refreshToken: required("refreshToken").min(1, "refreshToken is required"),
 })
 
+export const forgotSchema = z.object({
+  email: required("Email")
+    .trim()
+    .toLowerCase()
+    .email("Enter a valid email address"),
+})
+
+export const resetSchema = z.object({
+  token: required("Reset token").regex(
+    /^[a-f0-9]{64}$/,
+    "This reset link is not valid",
+  ),
+  newPassword: required("New password")
+    .min(8, "Password must be at least 8 characters")
+    .max(72, "Password must be at most 72 characters"),
+})
+
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
+export type ForgotInput = z.infer<typeof forgotSchema>
+export type ResetInput = z.infer<typeof resetSchema>

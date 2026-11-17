@@ -1,6 +1,6 @@
 import { IListing, Listing } from "../models/listing.model"
 import { IRequest } from "../models/request.model"
-import { User } from "../models/user.model"
+import { IUser, User } from "../models/user.model"
 import { emailLayout, escapeHtml, sendEmail } from "./email.service"
 
 const site = () =>
@@ -143,6 +143,22 @@ export const notifyListingDecision = (
              <p>Edit the listing and it will be reviewed again.</p>`,
         approved ? "See my listings" : "Fix my listing",
         `${site()}/my-listings`,
+      ),
+    )
+  })
+
+export const notifyPasswordReset = (user: IUser, token: string) =>
+  safely(async () => {
+    await sendEmail(
+      user.email,
+      "Reset your StudyLink LK password",
+      emailLayout(
+        "Reset your password",
+        `<p>Hi ${escapeHtml(user.name)},</p>
+         <p>We received a request to reset your password. This link works for <b>30 minutes</b> and can be used <b>once</b>.</p>
+         <p>If you did not ask for this, you can ignore this email. Your password will stay the same.</p>`,
+        "Choose a new password",
+        `${site()}/reset-password?token=${token}`,
       ),
     )
   })

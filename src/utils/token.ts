@@ -6,6 +6,10 @@ export interface TokenPayload {
   role: UserRole
 }
 
+export interface VerifiedPayload extends TokenPayload {
+  iat?: number
+}
+
 const getSecret = (name: string): string => {
   const value = process.env[name]
   if (!value) {
@@ -28,22 +32,30 @@ export const signRefreshToken = (payload: TokenPayload): string => {
   })
 }
 
-export const verifyAccessToken = (token: string): TokenPayload => {
+export const verifyAccessToken = (token: string): VerifiedPayload => {
   const decoded = jwt.verify(token, getSecret("JWT_ACCESS_SECRET"))
 
   if (typeof decoded === "string") {
     throw new Error("Invalid token payload")
   }
 
-  return { sub: decoded.sub as string, role: decoded.role as UserRole }
+  return {
+    sub: decoded.sub as string,
+    role: decoded.role as UserRole,
+    iat: decoded.iat,
+  }
 }
 
-export const verifyRefreshToken = (token: string): TokenPayload => {
+export const verifyRefreshToken = (token: string): VerifiedPayload => {
   const decoded = jwt.verify(token, getSecret("JWT_REFRESH_SECRET"))
 
   if (typeof decoded === "string") {
     throw new Error("Invalid token payload")
   }
 
-  return { sub: decoded.sub as string, role: decoded.role as UserRole }
+  return {
+    sub: decoded.sub as string,
+    role: decoded.role as UserRole,
+    iat: decoded.iat,
+  }
 }

@@ -10,7 +10,11 @@ export interface AuthRequest extends Request {
   }
 }
 
-export const authenticate = async (req: AuthRequest, _res: Response, next: NextFunction) => {
+export const authenticate = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction,
+) => {
   const header = req.headers.authorization
 
   if (!header || !header.startsWith("Bearer ")) {
@@ -33,6 +37,14 @@ export const authenticate = async (req: AuthRequest, _res: Response, next: NextF
 
   if (user.isBlocked) {
     throw new ApiError(403, "Your account has been blocked")
+  }
+
+  if (
+    user.passwordChangedAt &&
+    payload.iat &&
+    payload.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)
+  ) {
+    throw new ApiError(401, "Your password was changed. Please log in again")
   }
 
   req.user = { id: user._id.toString(), role: user.role }

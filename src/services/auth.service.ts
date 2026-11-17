@@ -6,7 +6,14 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from "../utils/token"
-import { RegisterInput, LoginInput } from "../validators/auth.validator"
+import {
+  RegisterInput,
+  LoginInput,
+  ForgotInput,
+  ResetInput,
+} from "../validators/auth.validator"
+import crypto from "node:crypto"
+import { notifyPasswordReset } from "./notification.service"
 
 export const registerUser = async (input: RegisterInput) => {
   const {
@@ -102,7 +109,55 @@ export const refreshAccessToken = async (refreshToken: string) => {
     throw new ApiError(403, "Your account has been blocked")
   }
 
+  if (
+    user.passwordChangedAt &&
+    payload.iat &&
+    payload.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)
+  ) {
+    throw new ApiError(401, "Your password was changed. Please log in again")
+  }
+
   return {
     accessToken: signAccessToken({ sub: user._id.toString(), role: user.role }),
   }
+}
+
+const hashToken = (token: string) =>
+  crypto.createHash("sha256").update(token).digest("hex")
+const RESET_MINUTES = 30
+
+export const requestPasswordReset = async (input: ForgotInput) => {
+  const user = await User.findOne({ email: input.email })
+
+  if (!user || user.isBlocked) {
+    return
+  }
+
+  const token = crypto.randomBytes(32).toString("hex")
+
+  user.passwordResetTokenHash = hashToken(token)
+  user.passwordResetExpires = new Date(Date.now() + RESET_MINUTES * 60 * 1000)
+  await user.save()
+
+  await notifyPasswordReset(user, token)
+}
+
+export const resetPassword = async (input: ResetInput) => {
+  const user = await User.findOne({
+    passwordResetTokenHash: hashToken(input.token),
+    passwordResetExpires: { $gt: new Date() },
+  }).select("+password")
+
+  if (!user) {
+    throw new ApiError(
+      400,
+      "This reset link is invalid or has expired. Please request a new one",
+    )
+  }
+
+  user.password = await bcrypt.hash(input.newPassword, 10)
+  user.passwordChangedAt = new Date()
+  user.passwordResetTokenHash = undefined
+  user.passwordResetExpires = undefined
+  await user.save()
 }
